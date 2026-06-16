@@ -1,4 +1,5 @@
-# WWW repo — only the landing page, ignore everything else
+# WWW repo — only landing page + APK
 *
 !index.html
+!CykloTemp-Pro-v0.8.apk
 !.gitignore
