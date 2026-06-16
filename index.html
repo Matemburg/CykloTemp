@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CykloTemp Pro — Aplikacja do śledzenia cyklu metodą symptotermiczną</title>
+    <meta name="description" content="CykloTemp Pro to natywna aplikacja na Androida wspierająca metodę symptotermiczną Rötzer (S1+S2+S3). Śledź temperaturę, śluz, szyjkę macicy i analizuj cykl.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --rose50: #fff1f2;
+            --rose100: #ffe4e6;
+            --rose200: #fecdd3;
+            --rose400: #fb7185;
+            --rose500: #f43f5e;
+            --rose600: #e11d48;
+            --rose700: #be123c;
+            --emerald50: #ecfdf5;
+            --emerald600: #059669;
+            --emerald500: #10b981;
+            --emerald700: #047857;
+            --blue500: #3b82f6;
+            --blue600: #2563eb;
+            --amber500: #f59e0b;
+            --slate50: #f8fafc;
+            --slate100: #f1f5f9;
+            --slate200: #e2e8f0;
+            --slate300: #cbd5e1;
+            --slate400: #94a3b8;
+            --slate500: #64748b;
+            --slate600: #475569;
+            --slate700: #334155;
+            --slate800: #1e293b;
+            --slate900: #0f172a;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+            --shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--slate800);
+            background: var(--white);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--slate200);
+            padding: 0 1.5rem; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-logo { font-weight: 800; font-size: 1.25rem; color: var(--rose600); letter-spacing: -0.02em; }
+        .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--slate600); font-weight: 500; font-size: 0.9rem; transition: color 0.15s; }
+        .nav-links a:hover { color: var(--rose600); }
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--rose600); color: var(--white); font-weight: 600;
+            padding: 0.75rem 1.75rem; border-radius: 0.75rem; text-decoration: none;
+            font-size: 0.95rem; transition: background 0.15s, transform 0.1s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: var(--rose700); transform: translateY(-1px); }
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--white); color: var(--rose600); font-weight: 600;
+            padding: 0.75rem 1.75rem; border-radius: 0.75rem; text-decoration: none;
+            font-size: 0.95rem; border: 2px solid var(--rose200); transition: all 0.15s; cursor: pointer;
+        }
+        .btn-secondary:hover { background: var(--rose50); border-color: var(--rose400); }
+        .btn-small { padding: 0.5rem 1.25rem; font-size: 0.85rem; border-radius: 0.6rem; }
+
+        /* Hero */
+        .hero {
+            padding: 8rem 1.5rem 6rem; text-align: center;
+            background: linear-gradient(135deg, var(--rose50) 0%, var(--white) 40%, var(--emerald50) 100%);
+        }
+        .hero-badge {
+            display: inline-block; background: var(--rose100); color: var(--rose700);
+            font-weight: 600; font-size: 0.8rem; padding: 0.35rem 0.9rem; border-radius: 2rem;
+            margin-bottom: 1.5rem; letter-spacing: 0.04em;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; letter-spacing: -0.03em;
+            color: var(--slate900); line-height: 1.15; margin-bottom: 1.25rem;
+        }
+        .hero h1 span { color: var(--rose600); }
+        .hero p {
+            font-size: 1.15rem; color: var(--slate500); max-width: 640px; margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+        .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+        /* Sections */
+        .section { padding: 5rem 1.5rem; max-width: 1100px; margin: 0 auto; }
+        .section-title { font-size: 2rem; font-weight: 800; color: var(--slate900); text-align: center; margin-bottom: 1rem; letter-spacing: -0.02em; }
+        .section-subtitle { font-size: 1.05rem; color: var(--slate500); text-align: center; margin-bottom: 3.5rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+        /* Feature Grid */
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .feature-card {
+            background: var(--white); border: 1px solid var(--slate200); border-radius: 1rem;
+            padding: 2rem; transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .feature-card:hover { box-shadow: var(--shadow-lg); border-color: var(--slate300); }
+        .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+        .feature-card h3 { font-weight: 700; font-size: 1.1rem; color: var(--slate900); margin-bottom: 0.5rem; }
+        .feature-card p { color: var(--slate500); font-size: 0.9rem; line-height: 1.6; }
+
+        /* Method explanation */
+        .method { background: var(--slate50); border-radius: 1.5rem; padding: 2.5rem; margin-bottom: 2rem; }
+        .method h3 { color: var(--rose600); font-weight: 700; font-size: 1.15rem; margin-bottom: 0.75rem; }
+        .method p { color: var(--slate600); font-size: 0.95rem; }
+        .signs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .sign-card {
+            background: var(--white); border: 1px solid var(--slate200); border-radius: 1rem; padding: 1.5rem;
+        }
+        .sign-card h4 { font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
+        .sign-card p { color: var(--slate500); font-size: 0.85rem; }
+        .sign-badge {
+            display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem;
+            border-radius: 0.4rem; margin-bottom: 0.75rem; letter-spacing: 0.03em;
+        }
+        .badge-s1 { background: #fef3c7; color: #b45309; }
+        .badge-s2 { background: #dbeafe; color: #1e40af; }
+        .badge-s3 { background: #ede9fe; color: #6b21a8; }
+
+        /* Download */
+        .download { background: linear-gradient(135deg, var(--rose600), var(--rose700)); color: var(--white); text-align: center; border-radius: 1.5rem; padding: 3.5rem 2rem; margin-top: 2rem; }
+        .download h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.75rem; }
+        .download p { opacity: 0.9; font-size: 1rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .download .btn-primary { background: var(--white); color: var(--rose600); }
+        .download .btn-primary:hover { background: var(--rose50); }
+        .version { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; opacity: 0.7; margin-top: 1rem; }
+
+        /* Support */
+        .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .support-card {
+            text-align: center; background: var(--white); border: 1px solid var(--slate200);
+            border-radius: 1rem; padding: 2rem 1.5rem; transition: box-shadow 0.2s;
+        }
+        .support-card:hover { box-shadow: var(--shadow-lg); }
+        .support-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .support-card h3 { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.4rem; }
+        .support-card p { color: var(--slate500); font-size: 0.85rem; margin-bottom: 1.25rem; }
+        .support-card .btn-primary { width: 100%; justify-content: center; }
+
+        /* Footer */
+        footer {
+            text-align: center; padding: 3rem 1.5rem; color: var(--slate400); font-size: 0.85rem;
+            border-top: 1px solid var(--slate200); margin-top: 4rem;
+        }
+        footer a { color: var(--rose600); text-decoration: none; font-weight: 500; }
+        footer a:hover { text-decoration: underline; }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .hero { padding: 6rem 1rem 4rem; }
+            .section { padding: 3rem 1rem; }
+            .features { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav">
+    <span class="nav-logo">🌡️ CykloTemp Pro</span>
+    <ul class="nav-links">
+        <li><a href="#czym">Czym jest</a></li>
+        <li><a href="#funkcje">Funkcje</a></li>
+        <li><a href="#metoda">Metoda</a></li>
+        <li><a href="#pobierz">Pobierz</a></li>
+        <li><a href="#wesprzyj">Wesprzyj</a></li>
+    </ul>
+</nav>
+
+<section class="hero">
+    <div class="hero-badge">🇵🇱 Aplikacja w języku polskim</div>
+    <h1>Śledź swój cykl z <span>naukową precyzją</span></h1>
+    <p>
+        CykloTemp Pro to darmowa, natywna aplikacja na Androida do śledzenia cyklu
+        menstruacyjnego oparta na <strong>metodzie symptotermicznej Rötzer</strong> (S1+S2+S3).
+        Obserwuj temperaturę, śluz i szyjkę macicy – zrozum swój cykl w 100%.
+    </p>
+    <div class="hero-actions">
+        <a href="#pobierz" class="btn-primary">📥 Pobierz aplikację</a>
+        <a href="#czym" class="btn-secondary">📖 Dowiedz się więcej</a>
+    </div>
+</section>
+
+<section class="section" id="czym">
+    <h2 class="section-title">Czym jest CykloTemp Pro?</h2>
+    <p class="section-subtitle">
+        Nowoczesna aplikacja do śledzenia cyklu, która wykorzystuje wszystkie trzy objawy
+        płodności, aby zapewnić najwyższą dokładność analizy.
+    </p>
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Wykres temperatury</h3>
+            <p>Interaktywny wykres z linią pokrywającą (coverline), możliwością przybliżania gestami i podświetlaniem wybranych dni.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📅</div>
+            <h3>Kalendarz cyklu</h3>
+            <p>Kolorowe oznaczenia faz cyklu, prognozy kolejnych cykli i szybki podgląd szczegółów każdego dnia.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧬</div>
+            <h3>Objawy S2 i S3</h3>
+            <p>Rejestracja śluzu szyjkowego (S2) oraz pozycji, rozwarcia i konsystencji szyjki macicy (S3) — wszystkie opcjonalnie.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>Inteligentna analiza</h3>
+            <p>Algorytm zgodny z naturalnym planowaniem rodziny (NFP). Oblicza szansę na ciążę na podstawie dostępnych wskaźników.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Prywatność i PIN</h3>
+            <p>Wszystkie dane przechowywane lokalnie na telefonie. Opcjonalna blokada PIN chroni aplikację przed niepowołanym dostępem.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">👫</div>
+            <h3>Tryb partnera</h3>
+            <p>Udostępnij kalendarz partnerowi. Widzi tylko krwawienie i szansę na ciążę — bez szczegółów intymnych.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="metoda">
+    <h2 class="section-title">Metoda Symptotermiczna (S1+S2+S3)</h2>
+    <p class="section-subtitle">
+        Aplikacja opiera się na potwierdzonej naukowo metodzie Rötzer, która łączy
+        trzy niezależne wskaźniki płodności.
+    </p>
+    <div class="signs">
+        <div class="sign-card">
+            <span class="sign-badge badge-s1">S1</span>
+            <h4>Temperatura podstawowa</h4>
+            <p>
+                Codzienny pomiar temperatury po przebudzeniu. Skok temperatury o 0,15–0,3°C
+                potwierdza owulację. Aplikacja wykrywa go automatycznie (reguła 3-powyżej-6)
+                i rysuje linię pokrywającą.
+            </p>
+        </div>
+        <div class="sign-card">
+            <span class="sign-badge badge-s2">S2</span>
+            <h4>Śluz szyjkowy</h4>
+            <p>
+                Obserwacja konsystencji śluzu (lepki → wilgotny → rozciągliwy).
+                Aplikacja identyfikuje szczyt śluzu i wyznacza okno płodne.
+                Możesz wyłączyć to pole w ustawieniach.
+            </p>
+        </div>
+        <div class="sign-card">
+            <span class="sign-badge badge-s3">S3</span>
+            <h4>Szyjka macicy</h4>
+            <p>
+                Pomiar pozycji (nisko/środkowo/wysoko), rozwarcia i konsystencji (miękka/twarda).
+                W połączeniu z S1 i S2 daje najdokładniejszą ocenę płodności.
+            </p>
+        </div>
+    </div>
+    <div class="method" style="margin-top: 2rem;">
+        <h3>🧪 Dlaczego trzy objawy?</h3>
+        <p>
+            Każdy pojedynczy wskaźnik może być niedoskonały — gorączka wpływa na temperaturę,
+            leki zmieniają śluz. Łącząc S1 (temperatura), S2 (śluz) i S3 (szyjka), uzyskujesz
+            znacznie wyższą precyzję. Jeśli jeden objaw jest zakłócony, pozostałe dwa nadal
+            pozwalają na dokładną ocenę. To standard <strong>naturalnego planowania rodziny</strong>.
+        </p>
+    </div>
+</section>
+
+<section class="section" id="funkcje">
+    <h2 class="section-title">Wszystkie funkcje</h2>
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🌡️</div>
+            <h3>Pomiar temperatury</h3>
+            <p>Zakres 32,0–42,0°C z walidacją danych. Możliwość oznaczenia zakłóceń (zły sen, alkohol).</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🩸</div>
+            <h3>Rejestracja krwawienia</h3>
+            <p>Skala intensywności: brak, plamienie, skąpe, średnie, obfite. Automatyczne wykrywanie początku cyklu.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">❤️</div>
+            <h3>Stosunek i testy</h3>
+            <p>Zaznacz dni współżycia oraz wyniki testów owulacyjnych (negatywny/pozytywny/niepewny).</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💰</div>
+            <h3>Szansa na ciążę</h3>
+            <p>Codzienna ocena: wysoka / średnia / niska / brak szansy — obliczana na podstawie wszystkich dostępnych objawów.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Dashboard</h3>
+            <p>Podsumowanie cyklu: dzień, faza, szansa na ciążę, owulacja. Wybór bieżącego lub archiwalnego cyklu.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <h3>Pełna historia</h3>
+            <p>Lista wszystkich pomiarów z możliwością edycji, usuwania i filtrowania po cyklach.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💾</div>
+            <h3>Eksport/Import JSON</h3>
+            <p>Zachowaj swoje dane eksportując do pliku lub zaimportuj z kopii zapasowej.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔐</div>
+            <h3>Bezpieczeństwo</h3>
+            <p>Wszystkie dane tylko lokalnie na urządzeniu. Brak chmury. Blokada PIN z automatycznym blokowaniem w tle.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="pobierz">
+    <div class="download">
+        <h2>📥 Pobierz CykloTemp Pro</h2>
+        <p>
+            Aplikacja dostępna bezpłatnie na Androida. Pobierz plik APK i zainstaluj ręcznie.
+            Wymagane Android 10 (API 29) lub nowszy.
+        </p>
+        <a href="https://github.com/Matemburg/CykloTemp/releases/latest/download/CykloTemp-Pro.apk" class="btn-primary" style="font-size: 1.1rem;">
+            ⬇️ Pobierz APK (v2.0)
+        </a>
+        <div class="version">Wymagane: Android 10+ • Wersja 2.0 • 2026</div>
+    </div>
+</section>
+
+<section class="section" id="wesprzyj">
+    <h2 class="section-title">Wesprzyj rozwój aplikacji</h2>
+    <p class="section-subtitle">
+        CykloTemp Pro jest i zawsze będzie darmowy. Jeśli chcesz wesprzeć rozwój projektu,
+        możesz to zrobić na kilka sposobów.
+    </p>
+    <div class="support-grid">
+        <div class="support-card">
+            <div class="support-icon">☕</div>
+            <h3>Buy Me a Coffee</h3>
+            <p>Postaw mi kawę — to najprostszy sposób wsparcia.</p>
+            <a href="https://www.buymeacoffee.com/matemburg" class="btn-primary btn-small" target="_blank">☕ Postaw kawę</a>
+        </div>
+        <div class="support-card">
+            <div class="support-icon">⭐</div>
+            <h3>Gwiazdka na GitHub</h3>
+            <p>Zostaw ⭐ na repozytorium — pomaga to odkryć aplikację innym.</p>
+            <a href="https://github.com/Matemburg/CykloTemp" class="btn-primary btn-small" target="_blank">⭐ Daj gwiazdkę</a>
+        </div>
+        <div class="support-card">
+            <div class="support-icon">🐛</div>
+            <h3>Zgłoś błąd / pomysł</h3>
+            <p>Znalazłaś błąd lub masz pomysł na nową funkcję? Otwórz issue!</p>
+            <a href="https://github.com/Matemburg/CykloTemp/issues" class="btn-primary btn-small" target="_blank">📝 Otwórz issue</a>
+        </div>
+        <div class="support-card">
+            <div class="support-icon">💬</div>
+            <h3>Podziel się z innymi</h3>
+            <p>Poleć aplikację znajomym — im więcej użytkowniczek, tym więcej motywacji do rozwoju.</p>
+            <a href="https://twitter.com/intent/tweet?text=Polecam%20CykloTemp%20Pro%20%E2%80%94%20darmow%C4%85%20aplikacj%C4%99%20do%20%C5%9Bledzenia%20cyklu%20metod%C4%85%20symptotermiczn%C4%85!%20https://matemburg.github.io/CykloTemp" class="btn-primary btn-small" target="_blank">🐦 Udostępnij</a>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>
+        © 2026 <strong>CykloTemp Pro</strong> •
+        <a href="https://github.com/Matemburg/CykloTemp" target="_blank">GitHub</a> •
+        <a href="https://github.com/Matemburg/CykloTemp/issues" target="_blank">Zgłoś problem</a> •
+        <a href="https://matemburg.github.io/CykloTemp" target="_blank">Strona projektu</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;">
+        Aplikacja nie zastępuje konsultacji lekarskiej. Dane mają charakter poglądowy.
+    </p>
+</footer>
+
+</body>
+</html>

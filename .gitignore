@@ -1,0 +1,4 @@
+# WWW repo — only the landing page, ignore everything else
+*
+!index.html
+!.gitignore
